@@ -1,10 +1,9 @@
-
 """
 #####################################
 Psmf (``methods.factorization.psmf``)
 #####################################
 
-**Probabilistic Sparse Matrix Factorization (PSMF)** [Dueck2005]_, [Dueck2004]_. 
+**Probabilistic Sparse Matrix Factorization (PSMF)** [Dueck2005]_, [Dueck2004]_.
 
 PSMF allows for varying levels of sensor noise in the
 data, uncertainty in the hidden prototypes used to explain the data and
@@ -162,13 +161,12 @@ class Psmf(nmf_std.Nmf_std):
         self.test_conv = 5 if not self.test_conv else self.test_conv
         if isinstance(self.prior, numbers.Real):
             self.prior = np.ones(int(self.prior)) / self.prior
-        self.tracker = mf_track.Mf_track() if self.track_factor and self.n_run > 1 \
-                                              or self.track_error else None
+        self.tracker = mf_track.Mf_track() if ((self.track_factor and self.n_run > 1) or self.track_error) else None
 
     def factorize(self):
         """
         Compute matrix factorization.
-         
+
         Return fitted factorization model.
         """
         self.N = len(self.prior)
@@ -188,8 +186,8 @@ class Psmf(nmf_std.Nmf_std):
                 self.H = self.V.__class__(
                     (self.rank, self.V.shape[1]), dtype='d')
             else:
-                self.W = np.mat(np.zeros((self.V.shape[0], self.rank)))
-                self.H = np.mat(np.zeros((self.rank, self.V.shape[1])))
+                self.W = np.zeros((self.V.shape[0], self.rank))
+                self.H = np.zeros((self.rank, self.V.shape[1]))
             self.s = np.zeros((self.V.shape[0], self.N), int)
             self.r = np.zeros((self.V.shape[0], 1), int)
             self.psi = np.array(std(self.V, axis=1, ddof=0))
@@ -211,11 +209,10 @@ class Psmf(nmf_std.Nmf_std):
                 mffit = mf_fit.Mf_fit(self)
                 self.callback_init(mffit)
             while self.is_satisfied(p_obj, c_obj, iter):
-                p_obj = c_obj if not self.test_conv or iter % self.test_conv == 0 else p_obj
+                p_obj = c_obj if ((not self.test_conv) or (iter % self.test_conv == 0)) else p_obj
                 self.update()
                 iter += 1
-                c_obj = self.objective(
-                ) if not self.test_conv or iter % self.test_conv == 0 else c_obj
+                c_obj = self.objective() if ((not self.test_conv) or (iter % self.test_conv == 0)) else c_obj
                 if self.track_error:
                     self.tracker.track_error(run, c_obj)
             if self.callback:
@@ -228,7 +225,7 @@ class Psmf(nmf_std.Nmf_std):
                     run, W=self.W, H=self.H, final_obj=c_obj, n_iter=iter)
             # if multiple runs are performed, fitted factorization model with
             # the lowest objective function value is retained
-            if c_obj <= best_obj or run == 0:
+            if (c_obj <= best_obj) or (run == 0):
                 best_obj = c_obj
                 self.n_iter = iter
                 self.final_obj = c_obj
@@ -254,23 +251,23 @@ class Psmf(nmf_std.Nmf_std):
         """
         Compute the satisfiability of the stopping criteria based on stopping
         parameters and objective function value.
-        
-        Return logical value denoting factorization continuation. 
-        
-        :param p_obj: Objective function value from previous iteration. 
+
+        Return logical value denoting factorization continuation.
+
+        :param p_obj: Objective function value from previous iteration.
         :type p_obj: `float`
         :param c_obj: Current objective function value.
         :type c_obj: `float`
-        :param iter: Current iteration number. 
+        :param iter: Current iteration number.
         :type iter: `int`
         """
-        if self.max_iter and self.max_iter <= iter:
+        if (self.max_iter and (self.max_iter <= iter)):
             return False
-        if self.test_conv and iter % self.test_conv != 0:
+        if (self.test_conv and (iter % self.test_conv != 0)):
             return True
-        if self.min_residuals and iter > 0 and p_obj - c_obj < self.min_residuals:
+        if (self.min_residuals and (iter > 0) and (p_obj - c_obj < self.min_residuals)):
             return False
-        if iter > 0 and c_obj > p_obj:
+        if ((iter > 0) and (c_obj > p_obj)):
             return False
         return True
 
@@ -364,7 +361,7 @@ class Psmf(nmf_std.Nmf_std):
                 if nn != n:
                     t_s1 = (1e-50 + self.rho[:, max(n, nn):self.N]).sum(
                         axis=1) / (1e-50 + self.rho[:, n:self.N]).sum(axis=1)
-                    self.sigma[:, :, n] -= np.tile(t_s1.reshape(self.psi.shape) / self.psi, (1, self.rank)) * self.cross_terms[:,:, nn]        
+                    self.sigma[:, :, n] -= np.tile(t_s1.reshape(self.psi.shape) / self.psi, (1, self.rank)) * self.cross_terms[:,:, nn]
         self.sigma = np.exp(self.sigma - np.tile(np.amax(self.sigma, 1).reshape(
             (self.sigma.shape[0], 1, self.sigma.shape[2])), (1, self.rank, 1)))
         self.sigma /= np.tile(self.sigma.sum(axis=1).reshape(

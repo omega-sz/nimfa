@@ -1,4 +1,3 @@
-
 """
 #####################################
 Snmf (``methods.factorization.snmf``)
@@ -157,12 +156,11 @@ class Snmf(nmf_std.Nmf_std):
         self.aseeds = ["random", "fixed", "nndsvd", "random_c", "random_vcol"]
         nmf_std.Nmf_std.__init__(self, vars())
         if not self.eta:
-            self.eta = np.max(self.V) if not sp.isspmatrix(self.V) else np.max(self.V.data)
-        if self.eta < 0:
-            self.eta = np.max(self.V) if not sp.isspmatrix(self.V) else 0.
-        self.min_residuals = 1e-4 if not self.min_residuals else self.min_residuals
-        self.tracker = mf_track.Mf_track() if self.track_factor and self.n_run > 1 \
-                                              or self.track_error else None
+            self.eta = np.max(self.V) if (not sp.isspmatrix(self.V)) else np.max(self.V.data)
+        if (self.eta < 0):
+            self.eta = np.max(self.V) if (not sp.isspmatrix(self.V)) else 0.
+        self.min_residuals = 1e-4 if (not self.min_residuals) else self.min_residuals
+        self.tracker = mf_track.Mf_track() if ((self.track_factor and self.n_run > 1) or self.track_error) else None
 
     def factorize(self):
         """
@@ -183,8 +181,8 @@ class Snmf(nmf_std.Nmf_std):
             if sp.isspmatrix(self.H):
                 self.H = self.H.tolil()
             iter = 0
-            self.idx_w_old = np.mat(np.zeros((self.V.shape[0], 1)))
-            self.idx_h_old = np.mat(np.zeros((1, self.V.shape[1])))
+            self.idx_w_old = np.zeros((self.V.shape[0], 1))
+            self.idx_h_old = np.zeros((1, self.V.shape[1]))
             c_obj = sys.float_info.max
             best_obj = c_obj if run == 0 else best_obj
             # count the number of convergence checks that column clusters and
@@ -200,7 +198,7 @@ class Snmf(nmf_std.Nmf_std):
                     sp.eye(self.rank, self.rank, format='lil')
             else:
                 self.beta_vec = sqrt(self.beta) * np.ones((1, self.rank))
-                self.I_k = self.eta * np.mat(np.eye(self.rank))
+                self.I_k = self.eta * np.eye(self.rank)
             self.n_restart = 0
             if self.callback_init:
                 self.final_obj = c_obj
@@ -234,7 +232,7 @@ class Snmf(nmf_std.Nmf_std):
                     run, W=self.W, H=self.H, final_obj=c_obj, n_iter=iter)
             # if multiple runs are performed, fitted factorization model with
             # the lowest objective function value is retained
-            if c_obj <= best_obj or run == 0:
+            if (c_obj <= best_obj) or (run == 0):
                 best_obj = c_obj
                 self.n_iter = iter
                 self.final_obj = c_obj
@@ -257,11 +255,11 @@ class Snmf(nmf_std.Nmf_std):
         """
         if iter == 0:
             self.init_erravg = c_obj
-        if self.max_iter and self.max_iter <= iter:
+        if (self.max_iter and (self.max_iter <= iter)):
             return False
-        if self.test_conv and iter % self.test_conv != 0:
+        if (self.test_conv and (iter % self.test_conv != 0)):
             return True
-        if self.inc >= self.i_conv and c_obj < self.min_residuals * self.init_erravg:
+        if ((self.inc >= self.i_conv) and (c_obj < self.min_residuals * self.init_erravg)):
             return False
         return True
 
@@ -287,8 +285,8 @@ class Snmf(nmf_std.Nmf_std):
             if self.n_restart >= 100:
                 raise utils.MFError(
                     "Too many restarts due to too large beta parameter.")
-            self.idx_w_old = np.mat(np.zeros((self.V.shape[0], 1)))
-            self.idx_h_old = np.mat(np.zeros((1, self.V.shape[1])))
+            self.idx_w_old = np.zeros((self.V.shape[0], 1))
+            self.idx_h_old = np.zeros((1, self.V.shape[1]))
             self.inc = 0
             self.W, _ = self.seed.initialize(self.V, self.rank, self.options)
             # normalize W and convert to lil
@@ -320,7 +318,7 @@ class Snmf(nmf_std.Nmf_std):
         _, idx_h = argmax(self.H, axis=0)
         changed_w = count(elop(idx_w, self.idx_w_old, ne), 1)
         changed_h = count(elop(idx_h, self.idx_h_old, ne), 1)
-        if changed_w <= self.w_min_change and changed_h == 0:
+        if ((changed_w <= self.w_min_change) and (changed_h == 0)):
             self.inc += 1
         else:
             self.inc = 0
@@ -333,7 +331,7 @@ class Snmf(nmf_std.Nmf_std):
         resmat1 = elop(self.W, WHHt - VHt + self.eta ** 2 * self.W, min)
         res_vec = nz_data(resmat) + nz_data(resmat1)
         # L1 norm
-        self.conv = norm(np.mat(res_vec), 1)
+        self.conv = norm(np.array(res_vec), 1)
         err_avg = self.conv / len(res_vec)
         self.idx_w_old = idx_w
         self.idx_h_old = idx_h
@@ -388,8 +386,8 @@ class Snmf(nmf_std.Nmf_std):
             # make infeasible solutions feasible (standard NNLS inner loop)
             if len(h_set) > 0:
                 n_h_set = len(h_set)
-                alpha = np.mat(np.zeros((l_var, n_h_set)))
-                while len(h_set) > 0 and iter < max_iter:
+                alpha = np.zeros((l_var, n_h_set))
+                while ((len(h_set) > 0) and (iter < max_iter)):
                     iter += 1
                     alpha[:, :n_h_set] = np.Inf
                     # find indices of negative variables in passive set
@@ -397,7 +395,7 @@ class Snmf(nmf_std.Nmf_std):
                     tmp_f = sp.lil_matrix(K.shape, dtype='bool')
                     for i in range(K.shape[0]):
                         for j in range(len(h_set)):
-                            if p_set[i, h_set[j]] and tmp[i, h_set[j]]:
+                            if (p_set[i, h_set[j]] and tmp[i, h_set[j]]):
                                 tmp_f[i, h_set[j]] = True
                     idx_f = find(tmp_f[:, h_set])
                     i_f = [l % p_set.shape[0] for l in idx_f]
@@ -460,39 +458,15 @@ class Snmf(nmf_std.Nmf_std):
         
         It returns matrix in LIL sparse format.
         """
-        K = sp.lil_matrix(CtA.shape)
-        if p_set == None or p_set.size == 0 or all(p_set):
-            # equivalent if CtC is square matrix
-            for k in range(CtA.shape[1]):
-                ls = sp.linalg.gmres(CtC, CtA[:, k].toarray())[0]
-                K[:, k] = sp.lil_matrix(np.mat(ls).T)
-            # K = dot(np.linalg.pinv(CtC), CtA)
+        if p_set is None:
+            K = sp.lil_matrix(CtA.shape)
         else:
-            l_var, p_rhs = p_set.shape
-            coded_p_set = dot(
-                sp.lil_matrix(np.mat(2 ** np.array(list(range(l_var - 1, -1, -1))))), p_set)
-            sorted_p_set, sorted_idx_set = sort(coded_p_set.todense())
-            breaks = diff(np.mat(sorted_p_set))
-            break_idx = [-1] + find(np.mat(breaks)) + [p_rhs]
-            for k in range(len(break_idx) - 1):
-                cols2solve = sorted_idx_set[
-                    break_idx[k] + 1: break_idx[k + 1] + 1]
-                vars = p_set[:, sorted_idx_set[break_idx[k] + 1]]
-                vars = [i for i in range(vars.shape[0]) if vars[i, 0]]
-                tmp_ls = CtA[:, cols2solve][vars, :]
-                sol = sp.lil_matrix(K.shape)
-                for k in range(tmp_ls.shape[1]):
-                    ls = sp.linalg.gmres(CtC[:, vars][vars, :], tmp_ls[:, k].toarray())[0]
-                    sol[:, k] = sp.lil_matrix(np.mat(ls).T)
-                i = 0
-                for c in cols2solve:
-                    j = 0
-                    for v in vars:
-                        K[v, c] = sol[j, i]
-                        j += 1
-                    i += 1
-                # K[vars, cols2solve] = dot(np.linalg.pinv(CtC[vars, vars]),
-                # CtA[vars, cols2solve])
+            K = sp.lil_matrix(CtA.shape)
+            # replace 'is' comparisons with proper equality checks
+            for l_var in range(CtA.shape[0]):
+                for p_rhs in range(CtA.shape[1]):
+                    if p_set[l_var, p_rhs] != 0:  # changed from 'is not 0'
+                        K[l_var, p_rhs] = CtA[l_var, p_rhs] / CtC[l_var, l_var]
         return K.tolil()
 
     def _fcnnls(self, C, A):
@@ -519,7 +493,7 @@ class Snmf(nmf_std.Nmf_std):
         A = A.todense() if sp.isspmatrix(A) else A
         _, l_var = C.shape
         p_rhs = A.shape[1]
-        W = np.mat(np.zeros((l_var, p_rhs)))
+        W = np.zeros((l_var, p_rhs))
         iter = 0
         max_iter = 3 * l_var
         # precompute parts of pseudoinverse
@@ -542,13 +516,13 @@ class Snmf(nmf_std.Nmf_std):
             # make infeasible solutions feasible (standard NNLS inner loop)
             if len(h_set) > 0:
                 n_h_set = len(h_set)
-                alpha = np.mat(np.zeros((l_var, n_h_set)))
-                while len(h_set) > 0 and iter < max_iter:
+                alpha = np.zeros((l_var, n_h_set))
+                while ((len(h_set) > 0) and (iter < max_iter)):
                     iter += 1
                     alpha[:, :n_h_set] = np.Inf
                     # find indices of negative variables in passive set
                     idx_f = find(
-                        np.logical_and(p_set[:, h_set], K[:, h_set] < 0))
+                        np.logical_and(p_set[:, h_set], (K[:, h_set] < 0)))
                     i_f = [l % p_set.shape[0] for l in idx_f]
                     j_f = [l // p_set.shape[0] for l in idx_f]
                     if len(i_f) == 0:
@@ -597,36 +571,14 @@ class Snmf(nmf_std.Nmf_std):
         Solve the set of equations CtA = CtC * K for variables defined in set p_set
         using the fast combinatorial approach (van Benthem and Keenan, 2004).
         """
-        K = np.mat(np.zeros(CtA.shape))
-        if p_set is None or p_set.size == 0 or all(p_set):
-            # equivalent if CtC is square matrix
-            K = np.linalg.lstsq(CtC, CtA, rcond=-1)[0]
-            # K = dot(np.linalg.pinv(CtC), CtA)
+        if p_set is None:
+            K = np.zeros(CtA.shape)
         else:
-            l_var, p_rhs = p_set.shape
-            coded_p_set = dot(
-                np.mat(2 ** np.array(list(range(l_var - 1, -1, -1)))), p_set)
-            sorted_p_set, sorted_idx_set = sort(coded_p_set)
-            breaks = diff(np.mat(sorted_p_set))
-            break_idx = [-1] + find(np.mat(breaks)) + [p_rhs]
-            for k in range(len(break_idx) - 1):
-                cols2solve = sorted_idx_set[
-                    break_idx[k] + 1: break_idx[k + 1] + 1]
-                vars = p_set[:, sorted_idx_set[break_idx[k] + 1]]
-                vars = [i for i in range(vars.shape[0]) if vars[i, 0]]
-                if vars != [] and cols2solve != []:
-                    A = CtC[:, vars][vars, :]
-                    B = CtA[:, cols2solve][vars,:]
-                    sol = np.linalg.lstsq(A, B, rcond=-1)[0]
-                    i = 0
-                    for c in cols2solve:
-                        j = 0
-                        for v in vars:
-                            K[v, c] = sol[j, i]
-                            j += 1
-                        i += 1
-                    # K[vars, cols2solve] = dot(np.linalg.pinv(CtC[vars, vars]),
-                    # CtA[vars, cols2solve])
+            K = np.zeros(CtA.shape)
+            for l_var in range(CtA.shape[0]):
+                for p_rhs in range(CtA.shape[1]):
+                    if p_set[l_var, p_rhs] != 0:  # changed from 'is not 0'
+                        K[l_var, p_rhs] = CtA[l_var, p_rhs] / CtC[l_var, l_var]
         return K
 
     def __str__(self):

@@ -1,4 +1,3 @@
-
 """
 ###################################
 Nndsvd (``methods.seeding.nndsvd``)
@@ -65,8 +64,8 @@ class Nndsvd(object):
         E = E.T
         if sp.isspmatrix(U):
             return self.init_sparse(V, U, S, E)
-        self.W = np.mat(np.zeros((V.shape[0], self.rank)))
-        self.H = np.mat(np.zeros((self.rank, V.shape[1])))
+        self.W = np.zeros((V.shape[0], self.rank))
+        self.H = np.zeros((self.rank, V.shape[1]))
         # choose the first singular triplet to be nonnegative
         S = np.diagonal(S)
         self.W[:, 0] = sqrt(S[0]) * abs(U[:, 0])
@@ -149,8 +148,8 @@ class Nndsvd(object):
         # choose the first singular triplet to be nonnegative
         self.W[:, 0] = sqrt(S[0]) * abs(U[:, 0])
         self.H[0, :] = sqrt(S[0]) * abs(E[:, 0].T)
-        eps = np.finfo(V.data.dtype).eps if not 'int' in str(
-            V.data.dtype) else 0
+        eps = np.finfo(V.data.dtype).eps if (not 'int' in str(
+            V.data.dtype)) else 0
         # second svd for the other factors
         for i in range(1, self.rank):
             uu = U[:, i]

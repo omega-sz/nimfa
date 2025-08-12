@@ -1,4 +1,3 @@
-
 """
     ############################################################
     Gene Function Prediction (``examples.gene_func_prediction``)
@@ -162,8 +161,8 @@ def transform_data(path, include_meta=False):
             if line_type == "@DATA":
                 section = 'd'
                 idxs = set(range(idx)).intersection(used_idx)
-                attr_data = np.mat(np.zeros((1e4, len(attr2idx))))
-                class_data = np.mat(np.zeros((1e4, len(class2idx))))
+                attr_data = np.zeros((10000, len(attr2idx)))  # changed from np.mat
+                class_data = np.zeros((10000, len(class2idx)))  # changed from np.mat
         elif section == 'd':
             d, _, comment = line.strip().partition("%")
             values = d.split(",")
@@ -286,11 +285,11 @@ def compute_correlations(train, test):
     corrs = np.corrcoef(train['W'], test['W'])
     # alternative, it is time consuming - can be used for partial evaluation
     """corrs = {}
-    for i in xrange(test['W'].shape[0]):
-        corrs.setdefault(i, np.mat(np.zeros((train['W'].shape[0], 1))))
-        for j in xrange(train['W'].shape[0]):
+    for i in range(test['W'].shape[0]):  # 使用 range 替代 xrange
+        corrs.setdefault(i, np.zeros((train['W'].shape[0], 1)))  # 移除 np.mat
+        for j in range(train['W'].shape[0]):  # 使用 range 替代 xrange
             corrs[i][j, 0] = _corr(test['W'][i, :], train['W'][j, :])"""
-    return np.mat(corrs)
+    return np.array(corrs)  # 移除 np.mat
 
 
 def _corr(x, y):
@@ -375,7 +374,7 @@ def assign_labels(corrs, train, idx2class, method=0.):
             avg_corr_A = avg_corr_A / (np.sum(train['class'] != 0, 0) + 1)
             avg_corr_B = avg_corr_B / (np.sum(train['class'] == 0, 0) + 1)
             for cl_idx in range(n_cl):
-                if (avg_corr_A[0, cl_idx] > avg_corr_B[0, cl_idx]):
+                if avg_corr_A[0, cl_idx] > avg_corr_B[0, cl_idx]:
                     func2gene[cl_idx].append(key)
         elif method == "maximal":
             max_corr_A = np.amax(
@@ -383,13 +382,13 @@ def assign_labels(corrs, train, idx2class, method=0.):
             max_corr_B = np.amax(
                 np.multiply(np.tile(corrs[:n_train, test_idx], (1, n_cl)), train['class'] != 0), 0)
             for cl_idx in range(n_cl):
-                if (max_corr_A[0, cl_idx] > max_corr_B[0, cl_idx]):
+                if max_corr_A[0, cl_idx] > max_corr_B[0, cl_idx]:
                     func2gene[cl_idx].append(key)
         elif isinstance(method, float):
             max_corr = np.amax(
                 np.multiply(np.tile(corrs[:n_train, test_idx], (1, n_cl)), train['class']), 0)
             for cl_idx in range(n_cl):
-                if (max_corr[0, cl_idx] >= method):
+                if max_corr[0, cl_idx] >= method:
                     func2gene[cl_idx].append(key)
         else:
             raise ValueError("Unrecognized class assignment rule.")

@@ -71,7 +71,7 @@ def trace(X):
     if sp.isspmatrix(X):
         return sum(X[i, i] for i in range(X.shape[0]))
     else:
-        return np.trace(np.mat(X))
+        return np.trace(np.array(X))
 
 
 def any(X, axis=None):
@@ -87,7 +87,7 @@ def any(X, axis=None):
     """
     if sp.isspmatrix(X):
         X = X.tocsr()
-        assert axis == 0 or axis == 1 or axis is None, "Incorrect axis number."
+        assert ((axis == 0) or (axis == 1) or (axis is None)), "Incorrect axis number."
         if axis is None:
             return len(X.data) != X.shape[0] * X.shape[1]
         res = [0 for _ in range(X.shape[1 - axis])]
@@ -106,7 +106,7 @@ def any(X, axis=None):
                 check(now, row, col)
                 now += 1
         sol = [x != 0 for x in res]
-        return np.mat(sol) if axis == 0 else np.mat(sol).T
+        return np.array(sol) if axis == 0 else np.array(sol).T
     else:
         return X.any(axis)
 
@@ -125,7 +125,7 @@ def all(X, axis=None):
     """
     if sp.isspmatrix(X):
         X = X.tocsr()
-        assert axis == 0 or axis == 1 or axis is None, "Incorrect axis number."
+        assert ((axis == 0) or (axis == 1) or (axis is None)), "Incorrect axis number."
         if axis is None:
             return len(X.data) == X.shape[0] * X.shape[1]
         res = [0 for _ in range(X.shape[1 - axis])]
@@ -144,7 +144,7 @@ def all(X, axis=None):
                 check(now, row, col)
                 now += 1
         sol = [x == X.shape[0] if axis == 0 else x == X.shape[1] for x in res]
-        return np.mat(sol) if axis == 0 else np.mat(sol).T
+        return np.array(sol) if axis == 0 else np.array(sol).T
     else:
         return X.all(axis)
 
@@ -221,16 +221,16 @@ def std(X, axis=None, ddof=0):
     :type ddof: `float`
     """
     assert len(X.shape) == 2, "Input matrix X should be 2-D."
-    assert axis == 0 or axis == 1 or axis is None, "Incorrect axis number."
+    assert ((axis == 0) or (axis == 1) or (axis is None)), "Incorrect axis number."
     if sp.isspmatrix(X):
         if axis is None:
             mean = X.mean()
             no = X.shape[0] * X.shape[1]
             return sqrt(1. / (no - ddof) * sum((x - mean) ** 2 for x in X.data) + (no - len(X.data) * mean ** 2))
         if axis == 0:
-            return np.mat([np.std(X[:, i].toarray(), axis, ddof) for i in range(X.shape[1])])
+            return np.array([np.std(X[:, i].toarray(), axis, ddof) for i in range(X.shape[1])])
         if axis == 1:
-            return np.mat([np.std(X[i, :].toarray(), axis, ddof) for i in range(X.shape[0])]).T
+            return np.array([np.std(X[i, :].toarray(), axis, ddof) for i in range(X.shape[0])]).T
     else:
         return np.std(X, axis=axis, ddof=ddof)
 
@@ -249,9 +249,8 @@ def argmax(X, axis=None):
     """
     if sp.isspmatrix(X):
         X = X.tocsr()
-        assert axis == 0 or axis == 1 or axis is None, "Incorrect axis number."
-        res = [[float('-inf'), 0]
-               for _ in range(X.shape[1 - axis])] if axis is not None else [float('-inf'), 0]
+        assert ((axis == 0) or (axis == 1) or (axis is None)), "Incorrect axis number."
+        res = [[float('-inf'), 0] for _ in range(X.shape[1 - axis])] if (axis is not None) else [float('-inf'), 0]
 
         def _caxis(row, col):
             if X[row, col] > res[col][0]:
@@ -272,10 +271,10 @@ def argmax(X, axis=None):
             return res
         elif axis == 0:
             t = list(zip(*res))
-            return list(t[0]), np.mat(t[1])
+            return list(t[0]), np.array(t[1])
         else:
             t = list(zip(*res))
-            return list(t[0]), np.mat(t[1]).T
+            return list(t[0]), np.array(t[1]).T
     else:
         idxX = np.asmatrix(X).argmax(axis)
         if axis is None:
@@ -303,9 +302,8 @@ def argmin(X, axis=None):
     """
     if sp.isspmatrix(X):
         X = X.tocsr()
-        assert axis == 0 or axis == 1 or axis is None, "Incorrect axis number."
-        res = [[float('inf'), 0]
-               for _ in range(X.shape[1 - axis])] if axis is not None else [float('inf'), 0]
+        assert ((axis == 0) or (axis == 1) or (axis is None)), "Incorrect axis number."
+        res = [[float('inf'), 0] for _ in range(X.shape[1 - axis])] if (axis is not None) else [float('inf'), 0]
 
         def _caxis(row, col):
             if X[row, col] < res[col][0]:
@@ -326,10 +324,10 @@ def argmin(X, axis=None):
             return res
         elif axis == 0:
             t = list(zip(*res))
-            return list(t[0]), np.mat(t[1])
+            return list(t[0]), np.array(t[1])
         else:
             t = list(zip(*res))
-            return list(t[0]), np.mat(t[1]).T
+            return list(t[0]), np.array(t[1]).T
     else:
         idxX = np.asmatrix(X).argmin(axis)
         if axis is None:
@@ -356,7 +354,7 @@ def repmat(X, m, n):
     if sp.isspmatrix(X):
         return sp.hstack([sp.vstack([X for _ in range(m)], format=X.format) for _ in range(n)], format=X.format)
     else:
-        return np.tile(np.asmatrix(X), (m, n))
+        return np.tile(np.array(X), (m, n))
 
 
 def inv_svd(X):
@@ -389,8 +387,8 @@ def svd(X):
         else:
             U, S, V = _svd_right(X)
     else:
-        U, S, V = nla.svd(np.mat(X), full_matrices=False)
-        S = np.mat(np.diag(S))
+        U, S, V = nla.svd(np.array(X), full_matrices=False)
+        S = np.diag(S)
     return U, S, V
 
 
@@ -501,7 +499,7 @@ def dot(X, Y):
         # avoid dense dot product with mixed factors
         return sp.csr_matrix(X) * sp.csr_matrix(Y)
     else:
-        return np.asmatrix(X) * np.asmatrix(Y)
+        return np.array(X) @ np.array(Y)
 
 
 def multiply(X, Y):
@@ -522,7 +520,7 @@ def multiply(X, Y):
     else:
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
-            return np.multiply(np.mat(X), np.mat(Y))
+            return np.multiply(np.array(X), np.array(Y))
 
 
 def power(X, s):
@@ -621,18 +619,18 @@ def elop(X, Y, op):
     try:
         zp1 = op(0, 1) if sp.isspmatrix(X) else op(1, 0)
         zp2 = op(0, 0)
-        zp = zp1 != 0 or zp2 != 0
+        zp = (zp1 != 0) or (zp2 != 0)
     except:
         zp = 0
-    if sp.isspmatrix(X) or sp.isspmatrix(Y):
-        return _op_spmatrix(X, Y, op) if not zp else _op_matrix(X, Y, op)
+    if (sp.isspmatrix(X) or sp.isspmatrix(Y)):
+        return _op_spmatrix(X, Y, op) if (not zp) else _op_matrix(X, Y, op)
     else:
         try:
             X[X == 0] = np.finfo(X.dtype).eps
             Y[Y == 0] = np.finfo(Y.dtype).eps
         except ValueError:
-            return op(np.mat(X), np.mat(Y))
-        return op(np.mat(X), np.mat(Y))
+            return op(np.array(X), np.array(Y))
+        return op(np.array(X), np.array(Y))
 
 
 def _op_spmatrix(X, Y, op):
@@ -690,7 +688,7 @@ def _op_matrix(X, Y, op):
     # operation is not necessarily commutative
     assert X.shape == Y.shape, "Matrices are not aligned."
     eps = np.finfo(Y.dtype).eps if not 'int' in str(Y.dtype) else 0
-    return np.mat([[op(X[i, j], Y[i, j] + eps) for j in range(X.shape[1])] for i in range(X.shape[0])])
+    return np.array([[op(X[i, j], Y[i, j] + eps) for j in range(X.shape[1])] for i in range(X.shape[0])])
 
 
 def inf_norm(X):
@@ -709,7 +707,7 @@ def inf_norm(X):
     elif sp.isspmatrix(X):
         return (abs(X) * np.ones((X.shape[1]), dtype=X.dtype)).max()
     else:
-        return nla.norm(np.asmatrix(X), float('inf'))
+        return nla.norm(np.array(X), float('inf'))
 
 
 def norm(X, p="fro"):
@@ -722,7 +720,7 @@ def norm(X, p="fro"):
     :param p: Order of the norm.
     :type p: `str` or `float`
     """
-    assert 1 in X.shape or p != 2, "Computing entry-wise norms only."
+    assert ((1 in X.shape) or (p != 2)), "Computing entry-wise norms only."
     if sp.isspmatrix(X):
         fro = lambda X: sum(abs(x) ** 2 for x in X.data) ** (1. / 2)
         inf = lambda X: abs(X).sum(
@@ -740,9 +738,9 @@ def norm(X, p="fro"):
             1: one,
             -1: m_one,
         }.get(p)
-        return v(X) if v != None else sum(abs(x) ** p for x in X.data) ** (1. / p)
+        return v(X) if (v is not None) else sum(abs(x) ** p for x in X.data) ** (1. / p)
     else:
-        return nla.norm(np.mat(X), p)
+        return nla.norm(np.array(X), p)
 
 
 def vstack(X, format=None, dtype=None):

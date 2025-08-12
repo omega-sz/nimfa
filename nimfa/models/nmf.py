@@ -1,4 +1,3 @@
-
 """
     #####################
     Nmf (``models.nmf``)
@@ -82,35 +81,31 @@ class Nmf(object):
         """
         self.__dict__.update(params)
         # do not copy target and factor matrices into the program
-        if sp.isspmatrix(self.V):
-            self.V = self.V.tocsr().astype('d')
-        else:
-            self.V = np.asmatrix(self.V) if self.V.dtype == np.dtype(
-                float) else np.asmatrix(self.V, dtype='d')
+        if self.V is not None:
+            if sp.isspmatrix(self.V):
+                self.V = self.V.tocsr().astype('d')
+            else:
+                self.V = np.asarray(self.V) if (self.V.dtype == np.dtype(float)) else np.asarray(self.V, dtype='d')
         if self.V1 is not None:
             if sp.isspmatrix(self.V1):
                 self.V1 = self.V1.tocsr().astype('d')
             else:
-                self.V1 = np.asmatrix(self.V1) if self.V1.dtype == np.dtype(
-                    float) else np.asmatrix(self.V1, dtype='d')
+                self.V1 = np.asarray(self.V1) if (self.V1.dtype == np.dtype(float)) else np.asarray(self.V1, dtype='d')
         if self.W is not None:
             if sp.isspmatrix(self.W):
                 self.W = self.W.tocsr().astype('d')
             else:
-                self.W = np.asmatrix(self.W) if self.W.dtype == np.dtype(
-                    float) else np.asmatrix(self.W, dtype='d')
+                self.W = np.asarray(self.W) if (self.W.dtype == np.dtype(float)) else np.asarray(self.W, dtype='d')
         if self.H is not None:
             if sp.isspmatrix(self.H):
                 self.H = self.H.tocsr().astype('d')
             else:
-                self.H = np.asmatrix(self.H) if self.H.dtype == np.dtype(
-                    float) else np.asmatrix(self.H, dtype='d')
+                self.H = np.asarray(self.H) if (self.H.dtype == np.dtype(float)) else np.asarray(self.H, dtype='d')
         if self.H1 is not None:
             if sp.isspmatrix(self.H1):
                 self.H1 = self.H1.tocsr().astype('d')
             else:
-                self.H1 = np.asmatrix(self.H1) if self.H1.dtype == np.dtype(
-                    float) else np.asmatrix(self.H1, dtype='d')
+                self.H1 = np.asarray(self.H1) if (self.H1.dtype == np.dtype(float)) else np.asarray(self.H1, dtype='d')
         self._compatibility()
 
     def __call__(self):
@@ -185,7 +180,7 @@ class Nmf(object):
         if sp.isspmatrix(conn):
             return conn.__class__(conn, dtype='d')
         else:
-            return np.mat(conn, dtype='d')
+            return np.array(conn, dtype='d')
 
     def consensus(self, idx=None):
         """
@@ -202,9 +197,9 @@ class Nmf(object):
         V = self.target(idx)
         if self.track_factor:
             if sp.isspmatrix(V):
-                cons = V.__class__((V.shape[1], V.shape[1]), dtype=V.dtype)
+                cons = sp.lil_matrix((V.shape[1], V.shape[1]))
             else:
-                cons = np.mat(np.zeros((V.shape[1], V.shape[1])))
+                cons = np.zeros((V.shape[1], V.shape[1]))
             for i in range(self.n_run):
                 cons += self.connectivity(
                     H=self.tracker.get_factor(i).H, idx=idx)
@@ -433,9 +428,8 @@ class Nmf(object):
         :type idx: None or `str` with values 'coef' or 'coef1' (`int` value of 0 or 1, respectively) 
         """
         def sparseness(x):
-            eps = np.finfo(x.dtype).eps if 'int' not in str(x.dtype) else 1e-9
-            x1 = sqrt(x.shape[0]) - (abs(x).sum() + eps) / \
-                (sqrt(multiply(x, x).sum()) + eps)
+            eps = np.finfo(x.dtype).eps if ('int' not in str(x.dtype)) else 1e-9
+            x1 = sqrt(x.shape[0]) - (abs(x).sum() + eps) / (sqrt(multiply(x, x).sum()) + eps)
             x2 = sqrt(x.shape[0]) - 1
             return x1 / x2
         W = self.basis()
@@ -582,11 +576,11 @@ class Nmf(object):
         """
         W = self.basis()
         H = self.coef(0)
-        H1 = self.coef(1) if self.model_name == 'mm' else None
-        if self.seed is None and W is None and H is None and H1 is None:
-            self.seed = None if "none" in self.aseeds else "random"
-        if W is not None and H is not None:
-            if self.seed is not None and self.seed is not "fixed":
+        H1 = self.coef(1) if (self.model_name == 'mm') else None
+        if (self.seed is None) and (W is None) and (H is None) and (H1 is None):
+            self.seed = None if ("none" in self.aseeds) else "random"
+        if (W is not None) and (H is not None):
+            if (self.seed is not None) and (self.seed != "fixed"):
                 raise utils.MFError("Initial factorization is fixed.")
             else:
                 self.seed = seeding.fixed.Fixed()
