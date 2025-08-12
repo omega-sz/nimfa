@@ -47,7 +47,6 @@ Nimfa is tested to work under Python 2.7 and Python 3.4.
 The required dependencies to build the software are NumPy >= 1.7.0,
 =======
 The required dependencies to build the software are NumPy >= 2.0.0,
->>>>>>> 782297210c8e325c966cd9aeb1bc8203976ca9f3
 SciPy >= 0.12.0.
 
 For running the examples Matplotlib >= 1.1.1 is required.
